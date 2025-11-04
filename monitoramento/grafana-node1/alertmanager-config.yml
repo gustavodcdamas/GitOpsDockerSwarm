@@ -1,8 +1,8 @@
 global:
   resolve_timeout: 5m
   smtp_smarthost: 'smtp.mailgun.org:587'
-  smtp_from: 'sistema@mg.newm.com.br'
-  smtp_auth_username: 'sistema@mg.newm.com.br'
+  smtp_from: ''
+  smtp_auth_username: ''
   smtp_auth_password: ''
 
 templates:
@@ -64,17 +64,17 @@ route:
 receivers:
   - name: 'email-all'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 3
         parse_mode: 'HTML'
@@ -83,18 +83,18 @@ receivers:
 
   - name: 'api-daily-report'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 3
         parse_mode: 'HTML'
@@ -103,18 +103,18 @@ receivers:
 
   - name: 'api-critical'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 7
         parse_mode: 'HTML'
@@ -123,18 +123,18 @@ receivers:
 
   - name: 'server-warning'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 11
         parse_mode: 'HTML'
@@ -143,18 +143,18 @@ receivers:
 
   - name: 'server-critical'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 11
         parse_mode: 'HTML'
@@ -163,18 +163,18 @@ receivers:
 
   - name: 'container-warning'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 11
         parse_mode: 'HTML'
@@ -183,18 +183,18 @@ receivers:
 
   - name: 'application-critical'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 7
         parse_mode: 'HTML'
@@ -203,18 +203,18 @@ receivers:
 
   - name: 'ssl-alerts'
     email_configs:
-      - to: 'monitoramento@mg.newm.com.br'
-        from: 'sistema@mg.newm.com.br'
+      - to: ''
+        from: ''
         smarthost: 'smtp.mailgun.org:587'
-        auth_username: 'sistema@mg.newm.com.br'
-        auth_identity: 'sistema@mg.newm.com.br'
+        auth_username: ''
+        auth_identity: ''
         auth_password: ''
         headers:
           Subject: '{{ template "email.subject" . }}'
         html: '{{ template "email.html" . }}'
         send_resolved: true
     telegram_configs:
-      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+      - bot_token: ''
         chat_id: -1002614750965
         message_thread_id: 8
         parse_mode: 'HTML'
