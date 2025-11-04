@@ -18,7 +18,7 @@ log() {
 
 send_telegram() {
     local MESSAGE="$1"
-    local TELEGRAM_BOT_TOKEN="8030044150:AAEf4QbGw8NuSPsX8KpOJ8B53IqTqd160PE"
+    local TELEGRAM_BOT_TOKEN=""
     local CHAT_ID="-1002211772665"  # ID do canal/grupo
     local THREAD_ID="1747"  # Substitua pelo ID da thread específica
 
