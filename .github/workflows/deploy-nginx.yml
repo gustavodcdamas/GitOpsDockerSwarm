@@ -1,0 +1,33 @@
+name: Deploy NGINX Configs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "nginx-configs/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync configs via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 75.119.131.88
+          username: gustavin
+          key: ${{ secrets.SSH_KEY }}
+          source: "nginx-configs/"
+          target: "/gluster/shared_data/nginx_conf/"
+
+      - name: Reload NGINX remotely
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 75.119.131.88
+          username: gustavin
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker exec nginx nginx -t && docker exec nginx nginx -s reload

@@ -1,0 +1,552 @@
+groups:
+  - name: alertas_infraestrutura
+    rules:
+      - alert: HighCpuUsage
+        expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[10m])) by (instance) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Uso de CPU alto no servidor"
+          description: "EUA: O uso de CPU no servidor {{ $labels.instance }} está acima de 80% por mais de 10 minutos."
+
+      - alert: CriticalCpuUsage
+        expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: Uso de CPU crítico no servidor"
+          description: "EUA: O uso de CPU no servidor {{ $labels.instance }} está acima de 90% por mais de 5 minutos."
+
+      - alert: NodeInodesCriticamenteLow
+        expr: (sum by(instance, mountpoint)(node_filesystem_files_free{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"})/sum by (instance, mountpoint)(node_filesystem_files{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"})) <= 0.10
+        for: 5m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: Inodes críticos"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} com <10% de inodes livres por 5m."
+
+      - alert: NodeInodesLow
+        expr: (sum by(instance, mountpoint)(node_filesystem_files_free{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"})/sum by (instance, mountpoint)(node_filesystem_files{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"})) <= 0.20
+        for: 10m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Inodes baixos"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} com <20% de inodes livres por 10m."
+
+      - alert: NodeFilesystemReadOnly
+        expr: node_filesystem_readonly{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"} == 1
+        for: 2m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: Filesystem read-only"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} montado como read-only por 2m."
+
+      - alert: NodeOOMKills
+        expr: sum by (instance) (increase(node_vmstat_oom_kill[5m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: OOM Kill detectado"
+          description: "EUA: {{ $labels.instance }} registrou OOM kill nos últimos 5m."
+
+      - alert: NodeCpuStealHigh
+        expr: avg by (instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) >= 0.10
+        for: 5m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: CPU steal alto"
+          description: "EUA: {{ $labels.instance }} com >=10% de CPU steal em média por 5m (possível 'vizinho barulhento')."
+
+      - alert: NodeNetworkErrors
+        expr: sum by (instance) (rate(node_network_receive_errs_total{device!~"^(lo|docker.*)$"}[5m]) + rate(node_network_transmit_errs_total{device!~"^(lo|docker.*)$"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Erros de rede"
+          description: "EUA: {{ $labels.instance }} registrou erros de RX/TX nos últimos 5m."
+
+      - alert: NodeClockSkew
+        expr: abs(node_time_seconds - time()) > 10
+        for: 60m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Desvio de relógio"
+          description: "EUA: {{ $labels.instance }} com clock desviado >10s por 1 hora. Verifique NTP."
+
+      - alert: NodeSwapHigh
+        expr: (node_memory_SwapTotal_bytes > 0) and ((1 - node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes) >= 0.80)
+        for: 20m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Uso de swap alto"
+          description: "EUA: {{ $labels.instance }} usando >80% da swap por 20m."
+
+      - alert: HighNetworkUsage
+        expr: sum by (instance) (rate(node_network_receive_bytes_total{device!~"lo|docker.*"}[5m])) > 10e6
+        for: 5m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Uso de rede alto no servidor"
+          description: "EUA: O uso de rede no servidor {{ $labels.instance }} está acima de 10MB por 5 minutos."
+
+      - alert: NodeDiskSpaceCriticamenteLow
+        expr: 100 * (1 - (sum by (instance, mountpoint) (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs",device!~"rootfs"})) / sum by (instance, mountpoint) (node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs",device!~"rootfs"})) >= 90
+        for: 10m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: Espaço em disco baixo"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} com <10% livre por 10m."
+
+      - alert: NodeDiskSpaceLow
+        expr: 100 * (1 - (sum by (instance, mountpoint)(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs",device!~"rootfs"})) / sum by (instance, mountpoint) (node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs",device!~"rootfs"})) >= 80
+        for: 10m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Espaço em disco baixo"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} com <20% livre por 10m."
+
+      - alert: NodeDiskWillFillSoon
+        expr: predict_linear(node_filesystem_avail_bytes{fstype!~"^(tmpfs|squashfs|overlay|aufs|nsfs|proc|sysfs|cgroup2?|devtmpfs|tracefs|bpf|ramfs|fuse.*)$", device!~"rootfs"}[6h], 4*3600 ) <= 0
+        for: 5m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Disco encherá em breve"
+          description: "EUA: {{ $labels.instance }} {{ $labels.mountpoint }} previsto encher em <= 4h."
+
+      - alert: NodeMemoryCriticamenteLow
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) <= 0.10
+        for: 5m
+        labels:
+          severity: critical
+          category: server
+        annotations:
+          summary: "EUA: Memória disponível baixa"
+          description: "EUA: {{ $labels.instance }} com <10% de memória disponível por 5m."
+
+      - alert: NodeMemoryQuaseLow
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) <= 0.20
+        for: 10m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Memória disponível baixa"
+          description: "EUA: {{ $labels.instance }} com <20% de memória disponível por 10m."
+
+      - alert: NodeHighLoad
+        expr: node_load1 / count by (instance) (node_cpu_seconds_total{mode="idle"}) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+          category: server
+        annotations:
+          summary: "EUA: Carga alta"
+          description: "EUA: Load de {{ $labels.instance }} > 1.5 por EUA por 5m."
+
+      - alert: TargetDown
+        expr: up{job!~"blackbox.*|prometheus|grafana|alertmanager|node-exporter|cadvisor|alloy|loki"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "EUA: Target {{ $labels.job }} está down"
+          description: "EUA: {{ $labels.instance }} está indisponível há 5m."
+
+      - alert: HostPingDown
+        expr: probe_success{job="blackbox_tcp_(80|443)|blackbox_tls_443"} == 0 or max by (host)(probe_success{job="blackbox_tcp_(80|443)|blackbox_tls_443"}) == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "EUA: Host sem resposta TCP/TLS"
+          description: "EUA: {{ $labels.instance }} não responde ping há 5m."
+
+      - alert: DnsQueryFailed
+        expr: avg by (job, instance) (probe_success{job=~"blackbox_dns_udp_.*"}) == 0
+        for: 5m
+        labels: {severity: critical, category: dns}
+        annotations:
+          summary: "EUA: Falha de DNS"
+          description: "EUA: {{ $labels.job }} alvo {{ $labels.instance }} falhando há 5m."
+
+  - name: alertas_containers
+    rules:
+      - alert: ContainerHighCpuUsage
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[5m]) >= 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU alto no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 80% da CPU por 5 minutos."
+
+      - alert: ContainerCpuThrottlingHigh
+        expr: (rate(container_cpu_cfs_throttled_seconds_total{name!~"prometheus|grafana|alertmanager|node-exporter|blackbox|cadvisor|alloy|loki|process-exporter", container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter", image!~"prometheus|grafana|alertmanager|node-exporter|blackbox|cadvisor|alloy|loki|process-exporter", name!="", id!="/"}[5m]) / rate(container_cpu_cfs_periods_total{name!~"prometheus|grafana|alertmanager|node-exporter|blackbox|cadvisor|alloy|loki|process-exporter", container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",image!~"prometheus|grafana|alertmanager|node-exporter|blackbox|cadvisor|alloy|loki|process-exporter", name!="", id!="/"}[5m])) >= 0.20
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Throttling de CPU alto"
+          description: "EUA: {{ $labels.name }} (serviço: {{ $labels.container_label_com_docker_compose_service }}) com > 20% de períodos throttled por 10m."
+
+      - alert: ContainerHighCpuUsageLimited
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[5m]) / (
+            container_spec_cpu_quota{
+              name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+              image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              name!="",
+              id!="/"
+            } / container_spec_cpu_period{
+              name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+              image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              name!="",
+              id!="/"
+            }
+          ) >= 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU alto no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 80% do limite de CPU por 5 minutos."
+
+      - alert: ContainerCriticalCpuUsageLimited
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[5m]) / (
+            container_spec_cpu_quota{
+              name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+              image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              name!="",
+              id!="/"
+            } / container_spec_cpu_period{
+              name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+              image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+              name!="",
+              id!="/"
+            }
+          ) >= 0.9
+        for: 5m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU critico no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 90% do limite de CPU por 5 minutos."
+
+      - alert: ContainerStopped
+        expr: time() - container_last_seen{name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*"} >= 300
+        for: 0m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "EUA: Container {{ $labels.instance }} está parado"
+          description: "EUA: O container {{ $labels.name }} (serviço: {{ $labels.container_label_com_docker_compose_service }}) está parado há mais de 5m."
+
+      - alert: ContainerStoppedWarning
+        expr: time() - container_last_seen{name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*"} >= 120
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Container {{ $labels.instance }} está parado"
+          description: "EUA: O container {{ $labels.name }} (serviço: {{ $labels.container_label_com_docker_compose_service }}) está parado há mais de 10m."
+
+      - alert: ContainerCriticalCpuUsage
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[5m]) >= 0.9
+        for: 5m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU crítico no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 90% da CPU por 5 minutos."
+
+      - alert: ContainerHighCpuUsageUncapped
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[10m]) >= 0.8
+          and (container_spec_cpu_quota{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          } <= 0 or absent(container_spec_cpu_quota{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }))
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU alto no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 1 EUA do CPU por 10 minutos."
+
+      - alert: ContainerCriticalCpuUsageUncapped
+        expr: |
+          rate(container_cpu_usage_seconds_total{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }[5m]) >= 1.5
+          and (container_spec_cpu_quota{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          } <= 0 or absent(container_spec_cpu_quota{
+            name!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki|process-exporter",
+            image!~".*prometheus.*|.*grafana.*|.*alertmanager.*|.*node-exporter.*|.*blackbox.*|.*cadvisor.*|.*alloy.*|.*loki.*",
+            name!="",
+            id!="/"
+          }))
+        for: 5m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "EUA: Uso de CPU altíssimo no contêiner"
+          description: "EUA: O contêiner {{ $labels.name }} (imagem: {{ $labels.image }}) está usando mais de 2 EUAs do CPU por 5 minutos."
+
+      - alert: ContainerRestartLoop
+        expr: changes(container_start_time_seconds{name!~".prometheus.|.grafana.|.alertmanager.|.node-exporter.|.blackbox.|.cadvisor.|.alloy.|.loki.|.process-exporter.", container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki", image!~".prometheus.|.grafana.|.alertmanager.|.node-exporter.|.blackbox.|.cadvisor.|.alloy.|.loki.", name!="", id!="/"}[5m]) >= 5
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "EUA: Container reiniciando"
+          description: "EUA: {{ $labels.name }} reiniciou mais de 5 vezes nos últimos 10m."
+
+      - alert: ContainerRestartLoopCritical
+        expr: |
+          changes(container_start_time_seconds{ name!~".prometheus.|.grafana.|.alertmanager.|.node-exporter.|.blackbox.|.cadvisor.|.alloy.|.loki.", container_label_com_docker_compose_service!~"prometheus|grafana|alertmanager|node-exporter|blackbox-exporter|cadvisor|alloy|loki", image!~".prometheus.|.grafana.|.alertmanager.|.node-exporter.|.blackbox.|.cadvisor.|.alloy.|.loki.", name!="",id!="/" }[5m]) >= 20
+        for: 10m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "EUA: Container em loop de restart"
+          description: "EUA: {{ $labels.name }} reiniciou mais de 20 vezes nos últimos 10m."
+
+  - name: alertas_api
+    rules:
+      - alert: ApiDown
+        expr: probe_success{job="blackbox_api"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: api
+        annotations:
+          summary: "EUA: API está down"
+          description: "EUA: A API {{ $labels.instance }} não está respondendo."
+
+      - alert: ApiResponseTimeHigh
+        expr: (probe_duration_seconds{job="blackbox_api"} > 1.0) and (probe_success{job="blackbox_api"} == 1)
+        for: 5m
+        labels:
+          severity: warning
+          category: api
+        annotations:
+          summary: "EUA: Tempo de resposta alto para a API"
+          description: "EUA: A API {{ $labels.instance }} está respondendo em mais de 1.0 segundos por 5 minutos."
+
+      - alert: ApiLatencyDaily
+        expr: |
+          probe_duration_seconds{job="blackbox_api"} and on()
+          (
+            (vector((time()-10800)%86400) >= 28800 and vector((time()-10800)%86400) <= 28800+600)
+            or
+            (vector((time()-10800)%86400) >= 46800 and vector((time()-10800)%86400) <= 46800+600)
+            or
+            (vector((time()-10800)%86400) >= 64800 and vector((time()-10800)%86400) <= 64800+600)
+          )
+          and probe_success{job="blackbox_api"} == 1
+        for: 0m
+        labels:
+          severity: info
+          category: api_daily
+        annotations:
+          summary: "EUA: Relatório diário de latência da API"
+          description: "EUA: Latência atual da API {{ $labels.instance }}: {{ $value }}s"
+
+  - name: alertas_servicos
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "EUA: Redis está down"
+          description: "EUA: O Redis {{ $labels.instance }} não está respondendo."
+
+      - alert: RabbitDown
+        expr: rabbit_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "EUA: RabbitMQ está down"
+          description: "EUA: O RabbitMQ {{ $labels.instance }} não está respondendo."
+
+      - alert: PostgreSQLDown
+        expr: postgres_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "EUA: Postgres está down"
+          description: "EUA: O Postgres {{ $labels.instance }} não está respondendo."
+
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "EUA: MySQL está down"
+          description: "EUA: O MySQL {{ $labels.instance }} não está respondendo."
+
+      - alert: SqlServer
+        expr: mysql_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "EUA: SqlServer está down"
+          description: "EUA: SqlServer {{ $labels.instance }} não está respondendo."
+
+      - alert: ServiceTcpDown
+        expr: probe_success{job="blackbox_tcp_connect"} == 0
+        for: 5m
+        labels: {severity: critical, category: service}
+        annotations:
+          summary: "EUA: Serviço TCP indisponível"
+          description: "{{ $labels.instance }} indisponível (TCP) há 5m."
+
+  - name: alertas_ssl
+    rules:
+      - alert: SslExpiry30d
+        expr: (((probe_ssl_earliest_cert_not_after{job="blackbox_ssl"} or probe_ssl_earliest_cert_expiry{job="blackbox_ssl"}) - time()) <= 30*24*3600) and on (instance) probe_success{job="blackbox_ssl"} == 1
+        for: 0m
+        labels:
+          severity: warning
+          category: ssl
+        annotations:
+          summary: "EUA: Certificado SSL expirando"
+          description: "EUA: O certificado SSL de {{ $labels.instance }} irá expirar em menos de 30 dias."
+
+      - alert: SslExpiry14d
+        expr: (((probe_ssl_earliest_cert_not_after{job="blackbox_ssl"} or probe_ssl_earliest_cert_expiry{job="blackbox_ssl"}) - time()) <= 14*24*3600) and on (instance) probe_success{job="blackbox_ssl"} == 1
+        for: 0m
+        labels:
+          severity: critical
+          category: ssl
+        annotations:
+          summary: "EUA: Certificado SSL expirando"
+          description: "EUA: O certificado SSL de {{ $labels.instance }} irá expirar em menos de 15 dias."
+
+      - alert: SslExpiry7d
+        expr: (((probe_ssl_earliest_cert_not_after{job="blackbox_ssl"} or probe_ssl_earliest_cert_expiry{job="blackbox_ssl"}) - time()) <= 7*24*3600) and on (instance) probe_success{job="blackbox_ssl"} == 1
+        for: 0m
+        labels:
+          severity: critical
+          category: ssl
+        annotations:
+          summary: "EUA: Certificado SSL expirando"
+          description: "EUA: O certificado SSL de {{ $labels.instance }} irá expirar em menos de 7 dias."
+
+      - alert: SslExpiry3d
+        expr: (((probe_ssl_earliest_cert_not_after{job="blackbox_ssl"} or probe_ssl_earliest_cert_expiry{job="blackbox_ssl"}) - time()) <= 3*24*3600) and on (instance) probe_success{job="blackbox_ssl"} == 1
+        for: 0m
+        labels:
+          severity: critical
+          category: ssl
+        annotations:
+          summary: "EUA: Certificado SSL expirando"
+          description: "EUA: O certificado SSL de {{ $labels.instance }} irá expirar em menos de 3 dias."

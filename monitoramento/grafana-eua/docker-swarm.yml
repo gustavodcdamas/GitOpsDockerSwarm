@@ -1,0 +1,428 @@
+services:
+  loki-eua:
+    image: grafana/loki:3.5.3
+    networks:
+      - net_publica
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki-eua/local-config.yaml:ro
+      - loki-data_gluster:/tmp/loki-eua
+    command: -config.file=/etc/loki/local-config.yaml
+    env_file: .env
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=loki-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  prometheus-eua:
+    image: prom/prometheus 
+    networks:
+      - net_publica
+    command:
+      - --web.enable-remote-write-receiver
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus-eua/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus-eua/alert.rules.yml
+      - prometheus-data_gluster:/prometheus-eua
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=prometheus-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+
+  grafana-eua:
+    image: grafana/grafana
+    networks:
+      - net_publica
+      - net_internet
+    env_file: .env
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - grafana-storage_gluster:/var/lib/grafana-eua
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 2
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki-eua:3100
+          basicAuth: false
+          isDefault: false
+          version: 1
+          editable: false
+        - name: Prometheus
+          type: prometheus
+          orgId: 1
+          url: http://prometheus-eua:9090
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=grafana-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure    
+
+  alloy-eua:
+    image: grafana/alloy:v1.9.2 
+    networks:
+      - net_publica
+    ports:
+      - 12345:12345
+      - 4317:4317
+      - 4318:4318
+    volumes:
+      - ./config.alloy:/etc/alloy-eua/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - alloy-data_gluster:/var/lib/alloy-eua/data
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=alloy-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  node-exporter-eua:
+    image: prom/node-exporter
+    networks:
+      - net_publica
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /run/systemd:/run/systemd:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.systemd
+      - --collector.tcpstat
+      - --collector.processes
+    ports:
+      - "9100:9100"
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=node-exporter-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  cadvisor-eua:
+    image: gcr.io/cadvisor/cadvisor:latest  
+    networks:
+      - net_publica
+    ports:
+      - "9393:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    privileged: true
+    command:
+      - '--housekeeping_interval=120s'
+      - '--max_housekeeping_interval=120s'
+      - '--logtostderr'
+      - '-v=1'
+      - '--docker_only=true'  
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=cadvisor-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  alertmanager-eua:
+    image: prom/alertmanager:latest
+    networks:
+      - net_publica
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--cluster.advertise-address=172.82.238.206:9094'
+      - '--cluster.listen-address=172.82.238.206:9094'
+    volumes:
+      - ./alertmanager-config.yml:/etc/alertmanager-eua/config.yml
+      - ./templates/alert-templates.tmpl:/etc/alertmanager-eua/templates/alert-templates.tmpl
+      - alertmanager-data_gluster:/alertmanager-eua
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=alertmanager-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  blackbox-exporter-eua:
+    image: prom/blackbox-exporter
+    networks:
+      - net_publica
+    ports:
+      - "9115:9115"
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    cap_add:
+      - NET_RAW
+    volumes:
+      - ./blackbox.yml:/etc/blackbox_exporter/config.yml
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=blackbox-exporter-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  process-exporter-eua:
+    image: ncabatoff/process-exporter:0.7.10
+    env_file: .env
+    pid: host
+    networks: 
+      - net_publica
+    ports:
+      - "9256:9256"
+    volumes:
+      - /proc:/host/proc:ro
+      - ./process-exporter.yml:/config.yml:ro
+    command: --procfs /host/proc --config.path /config.yml
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    depends_on:
+      - gluster-check
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=process-exporter-eua"
+      placement:
+        constraints:
+          - node.role == manager2
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+networks:
+  net_publica:
+    driver: overlay
+    attachable: true
+    external: true
+  net_internet:
+    driver: overlay
+    attachable: true
+    external: true
+
+volumes:
+  grafana-storage_gluster:
+    external: true
+  loki-data_gluster:
+    external: true
+  alloy-data_gluster:
+    external: true
+  prometheus-data_gluster:
+    external: true
+  alertmanager-data_gluster:
+    external: true
+
+configs:
+  wait-for-gluster:
+    file: /opt/gitops/scripts/healthchecks/wait-for-gluster.sh

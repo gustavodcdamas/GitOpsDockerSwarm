@@ -1,0 +1,24 @@
+# .github/workflows/rollback.yml
+name: Emergency Rollback
+
+on:
+  workflow_dispatch:  # Acionamento manual
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.commit_ref || 'previous-deploy' }}
+    
+    - name: Rollback Europe
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EUROPE_HOST }}
+        username: ${{ secrets.EUROPE_USER }}
+        key: ${{ secrets.EUROPE_SSH_KEY }}
+        script: |
+          cd /opt/infra
+          git checkout ${{ github.event.inputs.commit_ref || 'HEAD~1' }}
+          docker-compose up -d --force-recreate

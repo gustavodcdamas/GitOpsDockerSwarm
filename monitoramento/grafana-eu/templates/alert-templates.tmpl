@@ -1,0 +1,85 @@
+{{ define "email.subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}]{{ else }} RESOLVIDO]{{ end }} {{ .GroupLabels.alertname }} - {{ .GroupLabels.category | title }}{{ end }}
+
+{{ define "email.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .alert { border-left: 5px solid; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .firing { border-color: #e74c3c; background-color: #fdecea; }
+        .resolved { border-color: #2ecc71; background-color: #e8f8f0; }
+        .header { font-size: 1.4em; font-weight: bold; margin-bottom: 10px; }
+        .label { font-weight: bold; color: #555; margin-right: 5px; }
+        .emoji { font-size: 1.3em; vertical-align: middle; margin-right: 5px; }
+        .alert-item { margin-bottom: 8px; }
+        hr { border: 0; height: 1px; background: #ddd; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="alert {{ if eq .Status "firing" }}firing{{ else }}resolved{{ end }}">
+        <div class="header">
+            <span class="emoji">{{ if eq .Status "firing" }}🚨{{ else }}📊{{ end }}</span>
+            {{ .GroupLabels.alertname }}
+        </div>
+
+        <div class="alert-item">
+            <span class="emoji">🔄</span>
+            <span class="label">Status:</span> {{ .Status | toUpper }}
+        </div>
+        <div class="alert-item">
+            <span class="emoji">🏷️</span>
+            <span class="label">Categoria:</span> {{ .GroupLabels.category }}
+        </div>
+        <div class="alert-item">
+            <span class="emoji">⚠️</span>
+            <span class="label">Severidade:</span> {{ .GroupLabels.severity | toUpper }}
+        </div>
+
+        {{ range .Alerts }}
+        <hr>
+        <div class="alert-item">
+            <span class="emoji">📋</span>
+            <span class="label">Resumo:</span> {{ .Annotations.summary }}
+        </div>
+        <div class="alert-item">
+            <span class="emoji">📝</span>
+            <span class="label">Descrição:</span> {{ .Annotations.description }}
+        </div>
+        <div class="alert-item">
+            <span class="emoji">🖥️</span>
+            <span class="label">Instância:</span> {{ .Labels.instance }}
+        </div>
+        <div class="alert-item">
+            <span class="emoji">🕒</span>
+            <span class="label">Horário:</span> {{ .StartsAt.Local.Format "2006-01-02 15:04:05" }}
+        </div>
+        {{ if .EndsAt }}
+        <div class="alert-item">
+            <span class="emoji">✅</span>
+            <span class="label">Resolvido em:</span> {{ .EndsAt.Local.Format "2006-01-02 15:04:05" }}
+        </div>
+        {{ end }}
+        {{ end }}
+    </div>
+</body>
+</html>
+{{ end }}
+
+{{ define "telegram.message" }}
+{{ if eq .Status "firing" }}🚨 <b>ALERTA</b>{{ else }}📊 <b>RELATÓRIO</b>{{ end }}
+
+📌 <b>Tipo:</b> {{ .GroupLabels.alertname }}
+🔄 <b>Status:</b> {{ .Status | toUpper }}
+🏷️ <b>Categoria:</b> {{ .GroupLabels.category }}
+⚠️ <b>Severidade:</b> {{ .GroupLabels.severity | toUpper }}
+
+{{ range .Alerts }}
+─────────────────
+📋 <b>Resumo:</b> {{ .Annotations.summary }}
+📝 <b>Descrição:</b> {{ .Annotations.description }}
+🖥️ <b>Instância:</b> {{ .Labels.instance }}
+🕒 <b>Horário:</b> {{ .StartsAt.Local.Format "2006-01-02 15:04:05" }}
+{{ if .EndsAt }}✅ <b>Resolvido em:</b> {{ .EndsAt.Local.Format "2006-01-02 15:04:05" }}{{ end }}
+{{ end }}
+{{ end }}

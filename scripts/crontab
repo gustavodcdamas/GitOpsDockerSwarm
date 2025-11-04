@@ -1,0 +1,28 @@
+# Atualizar IPs do Cloudflare semanalmente (Domingo às 3 da manhã)
+0 3 * * 0 /opt/gitops/scripts/cloudflare/update-cloudflare-ips.sh
+
+#Atualização de segurança mensal
+0 4 1 * * /opt/gitops/scripts/update/safe-update.sh
+
+# Monitoramento do Keepalived a cada minuto
+* * * * * /opt/gitops/scripts/keepalived/check-services.sh
+
+# Notificações do Keepalived (já configurado nos arquivos keepalived.conf)
+# notify_master "/opt/gitops/scripts/keepalived/notify.sh master"
+# notify_backup "/opt/gitops/scripts/keepalived/notify.sh backup"
+# notify_fault "/opt/gitops/scripts/keepalived/notify.sh fault"
+
+#Verificação de serviços a cada 5 minutos
+* 5 * * * * /opt/gitops/scripts/monitor-scripts/service-monitor.sh
+
+# Monitoramento VPN a cada 5 minutos
+*/5 * * * * /opt/gitops/scripts/vpn-monitor/vpn-monitor.sh
+
+# Failover DNS a cada 5 minutos
+*/5 * * * * /opt/gitops/failover-dns.sh
+
+# Backup diário as 2 da manhã
+0 2 * * * /opt/gitops/bkp/backup.sh
+
+#Rotaciona chaves publicas e privadas das vpns IP Sec e de Clientes
+0 3 1 */3 * /opt/gitops/rotate_wg_keys_full.sh >> /var/log/wg_key_rotation.log 2>&1

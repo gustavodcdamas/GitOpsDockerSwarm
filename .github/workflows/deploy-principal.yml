@@ -1,0 +1,45 @@
+name: Deploy Services
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: [eu, usa]
+        service: [mailu, docuseal, nextcloud, nginx, vpn]  # Lista de serviços
+    env:
+      REGION: ${{ matrix.region }}
+      SERVICE: ${{ matrix.service }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets[matrix.region.upper() + '_SSH_KEY'] }}
+
+      - name: Deploy Service
+        run: | # Carrega as variáveis comuns da região source environments/${{ matrix.region }}/common.yml 
+          # Executa o script de deploy genérico
+          ./modules/deploy-service.sh \
+            -r ${{ matrix.region }} \
+            -s ${{ matrix.service }} \
+            -h ${{ secrets[matrix.region.upper() + '_HOST'] }} \
+            -u ${{ secrets[matrix.region.upper() + '_USER'] }}
+
+      - name: Health Check
+        run: | ./modules/health-check.sh \ -r ${{ matrix.region }} \ -s ${{ matrix.service }} \ -h ${{ secrets[matrix.region.upper() + '_HOST'] }} \ -u ${{ secrets[matrix.region.upper() + '_USER'] }} 
+      - name: Rollback (If Health Check Fails)
+        if: failure()
+        run: | echo "Implement rollback logic here" # Implemente a lógica de rollback (ex: reverter para o commit anterior)

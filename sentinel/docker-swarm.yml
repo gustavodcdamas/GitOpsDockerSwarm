@@ -1,0 +1,76 @@
+services:
+  gluster-check:
+    image: alpine:3.19
+    command: >
+      sh -c "
+        apk add --no-cache coreutils util-linux >/dev/null 2>&1 || true;
+        echo '[Sentinela] Iniciando monitoramento contínuo do GlusterFS...';
+        while true; do
+          echo '[Sentinela] Verificando montagem em /gluster/shared_data...';
+          if mountpoint -q /gluster/shared_data; then
+            if [ -w /gluster/shared_data ]; then
+              touch /gluster/shared_data/.gluster_ready && sync;
+              echo '[Sentinela] ✅ GlusterFS pronto. Arquivo .gluster_ready atualizado em $$(date).';
+            else
+              echo '[Sentinela] ⚠️ Montagem detectada, mas sem permissão de escrita!';
+            fi;
+          else
+            echo '[Sentinela] ❌ Montagem GlusterFS ausente em /gluster/shared_data!';
+          fi;
+          sleep 300; # 5 minutos
+        done
+      "
+    configs:
+      - source: wait-for-gluster
+        target: /opt/gitops/scripts/healthchecks/wait-for-gluster.sh
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    volumes:
+      - /gluster/shared_data:/gluster/shared_data:rw
+    networks:
+      - net_internet
+      - net_publica
+      - net_privada
+      - net_email
+    healthcheck:
+      test: ["CMD-SHELL", "mountpoint -q /gluster/shared_data && [ -f /gluster/shared_data/.gluster_ready ] || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.platform.os == linux
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
+configs:
+  wait-for-gluster:
+    file: /opt/gitops/scripts/healthchecks/wait-for-gluster.sh
+
+networks:
+  net_internet:
+    driver: overlay
+    attachable: true
+    external: true
+  net_publica:
+    driver: overlay
+    attachable: false
+    external: true
+  net_privada:
+    driver: overlay
+    attachable: false
+    external: true
+  net_email:
+    driver: overlay
+    attachable: false
+    external: true

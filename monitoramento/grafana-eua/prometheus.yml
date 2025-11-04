@@ -1,0 +1,504 @@
+global:
+  scrape_interval: 60s
+  scrape_timeout: 20s
+  evaluation_interval: 60s
+
+alerting:
+  alertmanagers:
+    - scheme: http
+      timeout: 10s
+      api_version: v2
+      static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: node-exporter
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - node-exporter:9100
+
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - alertmanager:9093
+
+  - job_name: cadvisor
+    metrics_path: /metrics
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - cadvisor:8080
+
+  - job_name: loki
+    static_configs:
+      - targets:
+          - loki:3100
+
+  - job_name: alloy
+    static_configs:
+      - targets:
+          - alloy:12345
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://mfe-host.dev.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.dev.sorce.newm.dev.br/
+          - https://mfe-core.dev.sorce.newm.dev.br/
+          - https://mfe-oauth.dev.sorce.newm.dev.br/
+          - https://mfe-host.qa.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.qa.sorce.newm.dev.br/
+          - https://mfe-core.qa.sorce.newm.dev.br/
+          - https://mfe-oauth.qa.sorce.newm.dev.br/
+          - https://mfe-host.snd.sorce.newm.dev.br/
+          - https://mfe-tools.snd.sorce.newm.dev.br/
+          - https://mfe-core.snd.sorce.newm.dev.br/
+          - https://mfe-oauth.snd.sorce.newm.dev.br/
+          - https://api-core.snd.sorce.newm.dev.br/swagger/index.html
+          - https://bff-core.snd.sorce.newm.dev.br/graphql
+          - https://bff-oauth.snd.sorce.newm.dev.br/graphql
+          - https://bff-tools.snd.sorce.newm.dev.br/graphql
+          - https://bff-core.dev.sorce.newm.dev.br/graphql
+          - https://bff-oauth.dev.sorce.newm.dev.br/graphql
+          - https://bff-tools.dev.sorce.newm.dev.br/graphql
+          - https://bff-core.qa.sorce.newm.dev.br/graphql
+          - https://bff-oauth.qa.sorce.newm.dev.br/graphql
+          - https://bff-tools.qa.sorce.newm.dev.br/graphql
+          - https://api-core.qa.sorce.newm.dev.br/swagger/index.html
+          - https://api-core.dev.sorce.newm.dev.br/swagger/index.html
+          - https://api-core.hml-ford.sorce.newm.dev.br/swagger/index.html
+          - https://bff-core.hml-ford.sorce.newm.dev.br/graphql
+          - https://bff-oauth.hml-ford.sorce.newm.dev.br/graphql
+          - https://bff-tools.hml-ford.sorce.newm.dev.br/graphql
+          - https://mfe-core.hml-ford.sorce.newm.dev.br
+          - https://mfe-oauth.hml-ford.sorce.newm.dev.br/
+          - https://mfe-tools.hml-ford.sorce.newm.dev.br
+          - https://mfe-host.hml-ford.sorce.newm.dev.br
+          - https://api-core.hml-ancora.sorce.newm.dev.br/swagger/index.html
+          - https://bff-core.hml-ancora.sorce.newm.dev.br/graphql
+          - https://bff-oauth.hml-ancora.sorce.newm.dev.br/graphql
+          - https://bff-tools.hml-ancora.sorce.newm.dev.br/graphql
+          - https://mfe-core.hml-ancora.sorce.newm.dev.br
+          - https://mfe-oauth.hml-ancora.sorce.newm.dev.br/
+          - https://mfe-tools.hml-ancora.sorce.newm.dev.br
+          - https://mfe-host.hml-ancora.sorce.newm.dev.br
+          - https://api-core.tst-ancora.sorce.newm.dev.br/swagger/index.html
+          - https://bff-core.tst-ancora.sorce.newm.dev.br/graphql
+          - https://bff-oauth.tst-ancora.sorce.newm.dev.br/graphql
+          - https://bff-tools.tst-ancora.sorce.newm.dev.br/graphql
+          - https://mfe-core.tst-ancora.sorce.newm.dev.br
+          - https://mfe-oauth.tst-ancora.sorce.newm.dev.br/
+          - https://mfe-tools.tst-ancora.sorce.newm.dev.br
+          - https://mfe-host.tst-ancora.sorce.newm.dev.br
+          - https://mfe-host.default-zema.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.default-zema.sorce.newm.dev.br/
+          - https://mfe-core.default-zema.sorce.newm.dev.br/
+          - https://mfe-oauth.default-zema.sorce.newm.dev.br/
+          - https://bff-core.default-zema.sorce.newm.dev.br/graphql
+          - https://bff-oauth.default-zema.sorce.newm.dev.br/graphql
+          - https://bff-tools.default-zema.sorce.newm.dev.br/graphql
+          - https://api-core.default-zema.sorce.newm.dev.br/swagger/index.html
+          - https://mfe-host.hml-recon.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.hml-recon.sorce.newm.dev.br/
+          - https://mfe-core.hml-recon.sorce.newm.dev.br/
+          - https://mfe-oauth.hml-recon.sorce.newm.dev.br/
+          - https://bff-core.hml-recon.sorce.newm.dev.br/graphql
+          - https://bff-oauth.hml-recon.sorce.newm.dev.br/graphql
+          - https://bff-tools.hml-recon.sorce.newm.dev.br/graphql
+          - https://api-core.hml-recon.sorce.newm.dev.br/swagger/index.html
+          - https://mfe-host.tst-recon.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.tst-recon.sorce.newm.dev.br/
+          - https://mfe-core.tst-recon.sorce.newm.dev.br/
+          - https://mfe-oauth.tst-recon.sorce.newm.dev.br/
+          - https://bff-core.tst-recon.sorce.newm.dev.br/graphql
+          - https://bff-oauth.tst-recon.sorce.newm.dev.br/graphql
+          - https://bff-tools.tst-recon.sorce.newm.dev.br/graphql
+          - https://api-core.tst-recon.sorce.newm.dev.br/swagger/index.html
+          - https://mfe-host.hml-une.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.hml-une.sorce.newm.dev.br/
+          - https://mfe-core.hml-une.sorce.newm.dev.br/
+          - https://mfe-oauth.hml-une.sorce.newm.dev.br/
+          - https://bff-core.hml-une.sorce.newm.dev.br/graphql
+          - https://bff-oauth.hml-une.sorce.newm.dev.br/graphql
+          - https://bff-tools.hml-une.sorce.newm.dev.br/graphql
+          - https://api-core.hml-une.sorce.newm.dev.br/swagger/index.html
+          - https://mfe-host.tst-une.sorce.newm.dev.br/auth/login
+          - https://mfe-tools.tst-une.sorce.newm.dev.br/
+          - https://mfe-core.tst-une.sorce.newm.dev.br/
+          - https://mfe-oauth.tst-une.sorce.newm.dev.br/
+          - https://bff-core.tst-une.sorce.newm.dev.br/graphql
+          - https://bff-oauth.tst-une.sorce.newm.dev.br/graphql
+          - https://bff-tools.tst-une.sorce.newm.dev.br/graphql
+          - https://api-core.tst-une.sorce.newm.dev.br/swagger/index.html
+          - https://api-core.default-une.sorce.newm.dev.br/swagger/index.html
+          - https://bff-core.default-une.sorce.newm.dev.br
+          - https://mfe-core.default-une.sorce.newm.dev.br
+          - https://mfe-oauth.default-une.sorce.newm.dev.br/
+          - https://bff-oauth.default-une.sorce.newm.dev.br/
+          - https://bff-tools.default-une.sorce.newm.dev.br
+          - https://mfe-tools.default-une.sorce.newm.dev.br
+          - https://mfe-host.default-une.sorce.newm.dev.br
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        regex: .*/graphql$
+        target_label: __param_module
+        replacement: graphql_post
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_443
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:443
+        - 74.48.140.36:443
+        - 74.48.84.37:443
+        - 177.71.188.52:443
+        - 34.74.154.203:443
+        - 74.48.114.202:443
+        - 142.171.137.63:443
+        - 35.196.122.135:443
+        - 66.103.207.43:443
+        - 172.81.238.200:443
+        - 172.82.238.200:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tls_443
+    metrics_path: /probe
+    params:
+      module: [tcp_tls_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:443
+        - 74.48.140.36:443
+        - 74.48.84.37:443
+        - 177.71.188.52:443
+        - 34.74.154.203:443
+        - 74.48.114.202:443
+        - 142.171.137.63:443
+        - 35.196.122.135:443
+        - 66.103.207.43:443
+        - 172.81.238.200:443
+        - 172.82.238.200:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_80
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:80
+        - 74.48.140.36:80
+        - 74.48.84.37:80
+        - 177.71.188.52:80
+        - 34.74.154.203:80
+        - 74.48.114.202:80
+        - 142.171.137.63:80
+        - 35.196.122.135:80
+        - 66.103.207.43:80
+        - 172.81.238.200:80
+        - 172.82.238.200:80
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_connect
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:22
+        - 74.48.140.36:22
+        - 74.48.84.37:22
+        - 177.71.188.52:22
+        - 34.74.154.203:22
+        - 74.48.114.202:22
+        - 142.171.137.63:22
+        - 35.196.122.135:22
+        - 66.103.207.43:22
+        - 172.81.238.200:53
+        - 172.82.238.200:53
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_dns_udp_google_com
+    metrics_path: /probe
+    params:
+      module: [dns_udp_google_com]
+    static_configs:
+      - targets:
+        - 172.81.238.200:53
+        - 172.82.238.200:53
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_dns_udp_topazevolution_com
+    metrics_path: /probe
+    params:
+      module: [dns_udp_topazevolution_com]
+    static_configs:
+      - targets:
+        - 172.81.238.200:53
+        - 172.82.238.200:53
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_api
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://artifactory.newm.com.br/
+        - https://ponto.newm.com.br/
+        - https://portainer.sistema.newm.dev.br/
+        - https://mantisbt.newm.com.br/login_page.php
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        regex: .*/graphql$
+        target_label: __param_module
+        replacement: graphql_post
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_ssl
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://mfe-host.dev.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.dev.sorce.newm.dev.br/
+        - https://mfe-core.dev.sorce.newm.dev.br/
+        - https://mfe-oauth.dev.sorce.newm.dev.br/
+        - https://mfe-host.qa.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.qa.sorce.newm.dev.br/
+        - https://mfe-core.qa.sorce.newm.dev.br/
+        - https://mfe-oauth.qa.sorce.newm.dev.br/
+        - https://mfe-host.snd.sorce.newm.dev.br/
+        - https://mfe-tools.snd.sorce.newm.dev.br/
+        - https://mfe-core.snd.sorce.newm.dev.br/
+        - https://mfe-oauth.snd.sorce.newm.dev.br/
+        - https://api-core.snd.sorce.newm.dev.br/swagger/index.html
+        - https://bff-core.snd.sorce.newm.dev.br/graphql
+        - https://bff-oauth.snd.sorce.newm.dev.br/graphql
+        - https://bff-tools.snd.sorce.newm.dev.br/graphql
+        - https://bff-core.dev.sorce.newm.dev.br/graphql
+        - https://bff-oauth.dev.sorce.newm.dev.br/graphql
+        - https://bff-tools.dev.sorce.newm.dev.br/graphql
+        - https://bff-core.qa.sorce.newm.dev.br/graphql
+        - https://bff-oauth.qa.sorce.newm.dev.br/graphql
+        - https://bff-tools.qa.sorce.newm.dev.br/graphql
+        - https://api-core.qa.sorce.newm.dev.br/swagger/index.html
+        - https://api-core.dev.sorce.newm.dev.br/swagger/index.html
+        - https://api-core.hml-ford.sorce.newm.dev.br/swagger/index.html
+        - https://bff-core.hml-ford.sorce.newm.dev.br/graphql
+        - https://bff-oauth.hml-ford.sorce.newm.dev.br/graphql
+        - https://bff-tools.hml-ford.sorce.newm.dev.br/graphql
+        - https://mfe-core.hml-ford.sorce.newm.dev.br
+        - https://mfe-oauth.hml-ford.sorce.newm.dev.br/
+        - https://mfe-tools.hml-ford.sorce.newm.dev.br
+        - https://mfe-host.hml-ford.sorce.newm.dev.br
+        - https://api-core.hml-ancora.sorce.newm.dev.br/swagger/index.html
+        - https://bff-core.hml-ancora.sorce.newm.dev.br/graphql
+        - https://bff-oauth.hml-ancora.sorce.newm.dev.br/graphql
+        - https://bff-tools.hml-ancora.sorce.newm.dev.br/graphql
+        - https://mfe-core.hml-ancora.sorce.newm.dev.br
+        - https://mfe-oauth.hml-ancora.sorce.newm.dev.br/
+        - https://mfe-tools.hml-ancora.sorce.newm.dev.br
+        - https://mfe-host.hml-ancora.sorce.newm.dev.br
+        - https://api-core.tst-ancora.sorce.newm.dev.br/swagger/index.html
+        - https://bff-core.tst-ancora.sorce.newm.dev.br/graphql
+        - https://bff-oauth.tst-ancora.sorce.newm.dev.br/graphql
+        - https://bff-tools.tst-ancora.sorce.newm.dev.br/graphql
+        - https://mfe-core.tst-ancora.sorce.newm.dev.br
+        - https://mfe-oauth.tst-ancora.sorce.newm.dev.br/
+        - https://mfe-tools.tst-ancora.sorce.newm.dev.br
+        - https://mfe-host.tst-ancora.sorce.newm.dev.br
+        - https://mfe-host.default-zema.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.default-zema.sorce.newm.dev.br/
+        - https://mfe-core.default-zema.sorce.newm.dev.br/
+        - https://mfe-oauth.default-zema.sorce.newm.dev.br/
+        - https://bff-core.default-zema.sorce.newm.dev.br/graphql
+        - https://bff-oauth.default-zema.sorce.newm.dev.br/graphql
+        - https://bff-tools.default-zema.sorce.newm.dev.br/graphql
+        - https://api-core.default-zema.sorce.newm.dev.br/swagger/index.html
+        - https://mfe-host.hml-recon.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.hml-recon.sorce.newm.dev.br/
+        - https://mfe-core.hml-recon.sorce.newm.dev.br/
+        - https://mfe-oauth.hml-recon.sorce.newm.dev.br/
+        - https://bff-core.hml-recon.sorce.newm.dev.br/graphql
+        - https://bff-oauth.hml-recon.sorce.newm.dev.br/graphql
+        - https://bff-tools.hml-recon.sorce.newm.dev.br/graphql
+        - https://api-core.hml-recon.sorce.newm.dev.br/swagger/index.html
+        - https://mfe-host.tst-recon.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.tst-recon.sorce.newm.dev.br/
+        - https://mfe-core.tst-recon.sorce.newm.dev.br/
+        - https://mfe-oauth.tst-recon.sorce.newm.dev.br/
+        - https://bff-core.tst-recon.sorce.newm.dev.br/graphql
+        - https://bff-oauth.tst-recon.sorce.newm.dev.br/graphql
+        - https://bff-tools.tst-recon.sorce.newm.dev.br/graphql
+        - https://api-core.tst-recon.sorce.newm.dev.br/swagger/index.html
+        - https://mfe-host.hml-une.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.hml-une.sorce.newm.dev.br/
+        - https://mfe-core.hml-une.sorce.newm.dev.br/
+        - https://mfe-oauth.hml-une.sorce.newm.dev.br/
+        - https://bff-core.hml-une.sorce.newm.dev.br/graphql
+        - https://bff-oauth.hml-une.sorce.newm.dev.br/graphql
+        - https://bff-tools.hml-une.sorce.newm.dev.br/graphql
+        - https://api-core.hml-une.sorce.newm.dev.br/swagger/index.html
+        - https://mfe-host.tst-une.sorce.newm.dev.br/auth/login
+        - https://mfe-tools.tst-une.sorce.newm.dev.br/
+        - https://mfe-core.tst-une.sorce.newm.dev.br/
+        - https://mfe-oauth.tst-une.sorce.newm.dev.br/
+        - https://bff-core.tst-une.sorce.newm.dev.br/graphql
+        - https://bff-oauth.tst-une.sorce.newm.dev.br/graphql
+        - https://bff-tools.tst-une.sorce.newm.dev.br/graphql
+        - https://api-core.tst-une.sorce.newm.dev.br/swagger/index.html
+        - https://api-core.default-une.sorce.newm.dev.br/swagger/index.html
+        - https://bff-core.default-une.sorce.newm.dev.br
+        - https://mfe-core.default-une.sorce.newm.dev.br
+        - https://mfe-oauth.default-une.sorce.newm.dev.br/
+        - https://bff-oauth.default-une.sorce.newm.dev.br/
+        - https://bff-tools.default-une.sorce.newm.dev.br
+        - https://mfe-tools.default-une.sorce.newm.dev.br
+        - https://mfe-host.default-une.sorce.newm.dev.br
+        - https://artifactory.newm.com.br/
+        - https://ponto.newm.com.br/
+        - https://portainer.sistema.newm.dev.br/
+        - https://mantisbt.newm.com.br/login_page.php
+        - https://aa.ancoraconsorcios.com.br
+        - https://afv.ancoraconsorcios.com.br/AFVServerConsorcio/ws
+        - https://afv.consorciocanopus.com.br
+        - https://afv.consorciocanopus.com.br/AFVConsorcio
+        - https://alfadescartaveis.infocs.appsave.com.br/server
+        - https://alianca.infocs.appsave.com.br/AFVServer
+        - https://apiautoatencionmobile.polen.com.co/ws_v1.00/
+        - https://app4.consorciocolombo.com.br:444/AFVServerConsorcio/ws
+        - https://api.caixaseguradora.com.br/caixaseguradora/prd/consorcios-caixa-newm/
+        - https://app.conshop.com.br/AFVServerConsorcio/ws
+        - https://app.consorciogovesa.com.br/AutoAtendimento
+        - https://app.consorciogovesa.com.br/ws
+        - https://app.consorcioredencao.com.br/AFVServerConsorcio/ws
+        - https://app.evoyconsorcios.com.br/AutoAtendimento
+        - https://appfv.brconsorcios.com/AFVBrConsorcios/ws
+        - https://apprepresentante.rodobens.com.br/ws
+        - https://apprepresentante.rodobens.com.br/ws_mb
+        - https://appsvcyac.yamahaservicosfinanceiros.com.br/AFVServerYamaha
+        - https://appvendas.hsconsorcios.com.br/AFVServerConsorcio/ws
+        - https://autoatendimento.consorciocanopus.com.br
+        - https://autoatendimento.consorciocanopus.com.br/AFVConsorcio
+        - https://blog.consorciocanopus.com.br
+        - https://boutiquedoqueijo.simsoft.appsave.com.br/
+        - https://con-app.gruposinosserra.com.br/AFVServerConsorcio/ws
+        - https://consorciosponchiado.com.br/AFVServerConsorcio/ws
+        - https://fabrimoveis-afv.tk/
+        - https://goldpack.infocs.appsave.com.br/AFVServer
+        - https://hlm.appsave.com.br/AFVServer
+        - https://lojaconsorciobmw.com.br
+        - https://loja.consorciocanopus.com.br
+        - https://lojaconsorciohavan.com.br
+        - https://mobile.acerteconsorcios.com.br/AFVServerConsorcio/ws
+        - https://mobile.ademilar.net.br/AFVAdemilar_card/ws
+        - https://mobile.ademilar.net.br/AFVAdemilar/ws
+        - https://mobile.consorciounifisa.com.br/AFVUnifisa/ws
+        - https://multidesc.infocs.appsave.com.br/AFVServer
+        - https://mwsm.consorcionanuque.com.br:44300/ws
+        - https://new.consorciotradicao.com.br/AFVServerConsorcio/ws
+        - https://newkey.cny.com.br/ws_mobile/NWSRVMB_VENDA.asmx
+        - https://newm-aa.consorcionanuque.com.br:44300
+        - https://newm.bancorbras.com.br/AFVServerConsorcio/ws
+        - https://newm.sicredi.com.br
+        - https://prd-con-app.gruposinosserra.com.br/AFVServerConsorcio/ws
+        - https://prdf.consorciounicoob.com.br/AFVServerConsorcio/ws
+        - https://produtec.appsave.com.br/tigrara/AFVServer
+        - https://salis.appsave.com.br/
+        - https://sbonline-afv.tk/nortesulminas
+        - https://sistemas.consorcioscania.com.br/NewmService/AFVServerScania
+        - https://suzel.appsave.com.br/
+        - https://tombini.appsave.com.br/
+        - https://updress-afv.tk/
+        - https://vendasmobile.sicoobconsorcios.com.br/ws_ponta
+        - https://vendasmobile.sicoobconsorcios.com.br/ws_sicoob
+        - https://windsoft.appsave.com.br/bmsqueiroz/AFVServer
+        - https://windsoft.appsave.com.br/emporionatural/AFVServer
+        - https://windsoft.appsave.com.br/gmpet/AFVServer
+        - https://windsoft.appsave.com.br/jsflores/AFVServer
+        - https://windsoft.appsave.com.br/multisoldas/AFVServer
+        - https://windsoft.appsave.com.br/primextech/AFVServer
+        - https://windsoft.appsave.com.br/varasmig/AFVServer
+        - https://www.convertmais.com.br/ws
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: process-exporter
+    static_configs:
+      - targets: ['process-exporter:9256']
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml

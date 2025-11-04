@@ -1,0 +1,229 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.mailgun.org:587'
+  smtp_from: 'sistema@mg.newm.com.br'
+  smtp_auth_username: 'sistema@mg.newm.com.br'
+  smtp_auth_password: ''
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+time_intervals:
+  - name: api-daily-windows
+    time_intervals:
+      - times:
+          - start_time: "08:00"
+            end_time: "08:10"
+          - start_time: "13:00"
+            end_time: "13:10"
+          - start_time: "18:00"
+            end_time: "18:10"
+        weekdays: ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+        location: "America/Sao_Paulo"
+
+route:
+  group_by: ['alertname', 'severity', 'category']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: 'email-all'
+  routes:
+    - match:
+        category: api_daily
+      receiver: 'api-daily-report'
+      group_by: ['alertname','severity','category','instance']
+      active_time_intervals: ['api-daily-windows']
+      group_wait: 120s
+      group_interval: 5m
+      repeat_interval: 5h
+
+    - match:
+        category: api
+        severity: critical
+      receiver: 'api-critical'
+
+    - match:
+        category: server
+        severity: warning
+      receiver: 'server-warning'
+
+    - match:
+        category: server
+        severity: critical
+      receiver: 'server-critical'
+
+    - match_re:
+        category: (container|infrastructure|database)
+        severity: critical
+      receiver: 'application-critical'
+
+    - match:
+        category: ssl
+      receiver: 'ssl-alerts'
+
+receivers:
+  - name: 'email-all'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 3
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'api-daily-report'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 3
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'api-critical'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 7
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'server-warning'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 11
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'server-critical'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 11
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'container-warning'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 11
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'application-critical'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 7
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+  - name: 'ssl-alerts'
+    email_configs:
+      - to: 'monitoramento@mg.newm.com.br'
+        from: 'sistema@mg.newm.com.br'
+        smarthost: 'smtp.mailgun.org:587'
+        auth_username: 'sistema@mg.newm.com.br'
+        auth_identity: 'sistema@mg.newm.com.br'
+        auth_password: ''
+        headers:
+          Subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+    telegram_configs:
+      - bot_token: '7866153776:AAGhWbGNqfZ0QgvfbwSPGjsDDP9dn09hWpE'
+        chat_id: -1002614750965
+        message_thread_id: 8
+        parse_mode: 'HTML'
+        message: '{{ template "telegram.message" . }}'
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']

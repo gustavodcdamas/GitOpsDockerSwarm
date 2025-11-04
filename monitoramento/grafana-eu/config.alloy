@@ -1,0 +1,72 @@
+// ###############################
+// #### Logging Configuration ####
+// ###############################
+
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "logs_integrations_docker" {
+  targets = discovery.docker.linux.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.+)"
+    target_label = "container_name"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.+)"
+    target_label = "service_name"
+  }
+
+  rule {
+    target_label = "job"
+    replacement = "docker"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label = "image"
+  }
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.logs_integrations_docker.output
+  labels     = {"platform" = "docker"}
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"  // IP fixo do Loki
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  protocols {
+    grpc { endpoint = "0.0.0.0:4317" }
+    http { endpoint = "0.0.0.0:4318" }
+  }
+}
+
+otelcol.exporter.otlp "loki_prometheus" {
+  client {
+    endpoint = "http://loki-eu:3100" # logs
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "http://tempo-eu:3200" # traces (veja abaixo)
+  }
+}
+
+otelcol.service "default" {
+  pipelines {
+    traces = [otelcol.receiver.otlp.default.output, otelcol.exporter.otlp.tempo.input]
+    logs   = [otelcol.receiver.otlp.default.output, otelcol.exporter.otlp.loki_prometheus.input]
+  }
+}

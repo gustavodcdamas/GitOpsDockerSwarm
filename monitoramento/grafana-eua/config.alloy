@@ -1,0 +1,46 @@
+// ###############################
+// #### Logging Configuration ####
+// ###############################
+
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "logs_integrations_docker" {
+  targets = discovery.docker.linux.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.+)"
+    target_label = "container_name"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.+)"
+    target_label = "service_name"
+  }
+
+  rule {
+    target_label = "job"
+    replacement = "docker"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label = "image"
+  }
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.logs_integrations_docker.output
+  labels     = {"platform" = "docker"}
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://172.82.238.209:3100/loki/api/v1/push"  // IP fixo do Loki
+  }
+}

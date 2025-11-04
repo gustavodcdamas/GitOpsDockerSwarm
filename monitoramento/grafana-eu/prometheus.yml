@@ -1,0 +1,281 @@
+global:
+  scrape_interval: 60s
+  scrape_timeout: 20s
+  evaluation_interval: 60s
+
+alerting:
+  alertmanagers:
+    - scheme: http
+      timeout: 10s
+      api_version: v2
+      static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: node-exporter
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - node-exporter:9100
+
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - alertmanager:9093
+
+  - job_name: cadvisor
+    metrics_path: /metrics
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - cadvisor:8080
+
+  - job_name: loki
+    static_configs:
+      - targets:
+          - loki:3100
+
+  - job_name: alloy
+    static_configs:
+      - targets:
+          - alloy:12345
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://gustavodcdamas.com.br
+          - https://mail.gustavodcdamas.com.br
+          - https://docs.gustavodcdamas.com.br
+          - https://drive.gustavodcdamas.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://evo.gustavodcdamas.com.br
+          - https://cuei.com.br
+          - https://mail.cuei.com.br
+          - https://docs.cuei.com.br
+          - https://drive.cuei.com.br
+          - https://evo.cuei.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://py2u.com 
+          - https://www.rexxdevs.com/
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        regex: .*/graphql$
+        target_label: __param_module
+        replacement: graphql_post
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_443
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:443
+        - 74.48.140.36:443
+        - 74.48.84.37:443
+        - 177.71.188.52:443
+        - 34.74.154.203:443
+        - 74.48.114.202:443
+        - 142.171.137.63:443
+        - 35.196.122.135:443
+        - 66.103.207.43:443
+        - 172.81.238.200:443
+        - 172.82.238.200:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tls_443
+    metrics_path: /probe
+    params:
+      module: [tcp_tls_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:443
+        - 74.48.140.36:443
+        - 74.48.84.37:443
+        - 177.71.188.52:443
+        - 34.74.154.203:443
+        - 74.48.114.202:443
+        - 142.171.137.63:443
+        - 35.196.122.135:443
+        - 66.103.207.43:443
+        - 172.81.238.200:443
+        - 172.82.238.200:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_80
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:80
+        - 74.48.140.36:80
+        - 74.48.84.37:80
+        - 177.71.188.52:80
+        - 34.74.154.203:80
+        - 74.48.114.202:80
+        - 142.171.137.63:80
+        - 35.196.122.135:80
+        - 66.103.207.43:80
+        - 172.81.238.200:80
+        - 172.82.238.200:80
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp_connect
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 44.205.224.203:22
+        - 74.48.140.36:22
+        - 74.48.84.37:22
+        - 177.71.188.52:22
+        - 34.74.154.203:22
+        - 74.48.114.202:22
+        - 142.171.137.63:22
+        - 35.196.122.135:22
+        - 66.103.207.43:22
+        - 172.81.238.200:53
+        - 172.82.238.200:53
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_dns_udp_google_com
+    metrics_path: /probe
+    params:
+      module: [dns_udp_google_com]
+    static_configs:
+      - targets:
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_dns_udp_gustavodcdamas_com
+    metrics_path: /probe
+    params:
+      module: [dns_udp_topazevolution_com]
+    static_configs:
+      - targets:
+        - 1.1.1.1:53
+        - 8.8.8.8:53
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_api
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://gustavodcdamas.com.br
+          - https://mail.gustavodcdamas.com.br
+          - https://docs.gustavodcdamas.com.br
+          - https://drive.gustavodcdamas.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://evo.gustavodcdamas.com.br
+          - https://cuei.com.br
+          - https://mail.cuei.com.br
+          - https://docs.cuei.com.br
+          - https://drive.cuei.com.br
+          - https://evo.cuei.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://py2u.com 
+          - https://www.rexxdevs.com/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        regex: .*/graphql$
+        target_label: __param_module
+        replacement: graphql_post
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_ssl
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://gustavodcdamas.com.br
+          - https://mail.gustavodcdamas.com.br
+          - https://docs.gustavodcdamas.com.br
+          - https://drive.gustavodcdamas.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://evo.gustavodcdamas.com.br
+          - https://cuei.com.br
+          - https://mail.cuei.com.br
+          - https://docs.cuei.com.br
+          - https://drive.cuei.com.br
+          - https://evo.cuei.com.br
+          - https://api.gustavodcdamas.com.br
+          - https://py2u.com 
+          - https://www.rexxdevs.com/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: process-exporter
+    static_configs:
+      - targets: ['process-exporter:9256']
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
